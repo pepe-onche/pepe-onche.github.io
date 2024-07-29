@@ -7,22 +7,45 @@ export class GameOver extends Scene
         super('GameOver');
     }
 
+    preload() {
+        this.load.image('gameover', 'assets/gameover.png')
+    }
+
+    init(data) {
+        this.score = data.score
+    }
+
     create ()
     {
-        this.cameras.main.setBackgroundColor(0xff0000);
+        this.cameras.main.setBackgroundColor(0x000000);
 
-        this.add.image(512, 384, 'background').setAlpha(0.5);
+        this.add.image(512, 250, 'gameover');
 
-        this.add.text(512, 384, 'Game Over', {
-            fontFamily: 'Arial Black', fontSize: 64, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
+        this.add.text(512, 380, 'SCORE: ' + this.score, {
+            fontFamily: 'Vollkorn', fontSize: 48, color: '#bbbbbb',
             align: 'center'
         }).setOrigin(0.5);
 
-        this.input.once('pointerdown', () => {
+        const highscore = localStorage.getItem('highscore') || this.score
+        this.add.text(512, 450, 'HIGHSCORE: ' + highscore, {
+            fontFamily: 'Vollkorn', fontSize: 38, color: '#bbbbbb',
+            align: 'center'
+        }).setOrigin(0.5);
 
-            this.scene.start('MainMenu');
+        this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 1, 1, 2)
 
+        const bg = this.add.graphics()
+        bg.fillStyle(0xffffff);
+        bg.fillRoundedRect(362, 510, 300, 100, 6);
+        bg.setInteractive(new Phaser.Geom.Rectangle(362, 510, 300, 100), Phaser.Geom.Rectangle.Contains)
+
+        this.add.text(512, 560, 'REJOUER', {
+            fontFamily: 'Vollkorn', fontSize: 38, color: '#000000',
+            align: 'center'
+        }).setOrigin(0.5);
+
+        bg.on('pointerdown', () => {
+            this.scene.start('Game');
         });
     }
 }

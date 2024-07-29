@@ -2,6 +2,7 @@ import { Boot } from './scenes/Boot';
 import { Game } from './scenes/Game';
 import { GameOver } from './scenes/GameOver';
 import { MainMenu } from './scenes/MainMenu';
+import { MusicManager } from './scenes/MusicManager';
 import { Preloader } from './scenes/Preloader';
 
 //  Find out more information about the Game Config at:
@@ -16,26 +17,22 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 0 },
-            debug: false
-        }
-    },
     fps: {
-        target: 30,
+        target: 60,
         forceSetTimeOut: true
     },
     render: {
+        // powerPreference: 'high-performance',
         antialias: true,
-        pixelArt: false,
-        roundPixels: false,
-        preserveDrawingBuffer: false
+        // pixelArt: false,
+        // roundPixels: false,
+        // preserveDrawingBuffer: false
     },
+
     scene: [
         Boot,
         Preloader,
+        MusicManager,
         MainMenu,
         Game,
         GameOver

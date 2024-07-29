@@ -1,23 +1,26 @@
 import { Scene } from 'phaser';
 
-export class MainMenu extends Scene
-{
-    constructor ()
-    {
+export class MainMenu extends Scene {
+    constructor () {
         super('MainMenu');
     }
 
-    create ()
-    {
-        this.add.image(512, 384, 'background');
+    preload() {
+    }
 
-        this.add.image(512, 300, 'logo');
+    create () {
+        if (!this.scene.isActive('MusicManager')) {
+            this.scene.launch('MusicManager');
+        }
 
-        this.add.text(512, 460, 'Main Menu', {
-            fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
+        this.add.image(512, 350, 'logo');
+
+        this.add.text(512, 480, 'CLIQUE POUR JOUER', {
+            fontFamily: 'Vollkorn', fontSize: 38, color: '#bbbbbb',
             align: 'center'
         }).setOrigin(0.5);
+
+        this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 1, 1, 2)
 
         this.input.once('pointerdown', () => {
 
