@@ -36,22 +36,22 @@ export class Game extends Scene
         ]
 
         this.bonuses = [{
-            text: 'Vitesse +20%',
+            text: 'VITESSE +20%',
             time: 10000,
             apply: () => this.stepSize *= 1.2,
             remove: () => this.stepSize = this.baseStepSize,
         }, {
-            text: 'Vitesse +50%',
+            text: 'VITESSE +50%',
             time: 10000,
             apply: () => this.stepSize *= 1.5,
             remove: () => this.stepSize = this.baseStepSize,
         }, {
-            text: 'Cortex',
+            text: 'CORTEX',
             time: 2000,
             apply: () => this.showFag('cortex', this.cortexSound),
             remove: () => this.hideFag(),
         }, {
-            text: 'Morsay',
+            text: 'MORSAY',
             time: 4600,
             apply: () => this.showFag('morsay', this.morsaySound),
             remove: () => this.hideFag(),
@@ -75,15 +75,17 @@ export class Game extends Scene
         this.guideText1 = this.add.text(this.scale.width / 4, this.scale.height / 2, 'SAUTER', { fontSize: '64px', fill: '#fff', fontFamily: 'Vollkorn' }).setOrigin(0.5)
         this.guideText1.setDepth(10000)
         this.guideText1.setScrollFactor(0)
+        this.guideText1.postFX.addBloom(0xffffff, 1, 1, 1, 1, 2)
         this.guideText2 = this.add.text(this.scale.width * 0.75, this.scale.height / 2, 'COURIR', { fontSize: '64px', fill: '#fff', fontFamily: 'Vollkorn' }).setOrigin(0.5)
         this.guideText2.setDepth(10000)
         this.guideText2.setScrollFactor(0)
+        this.guideText2.postFX.addBloom(0xffffff, 1, 1, 1, 1, 2)
         this.guideTextZone = this.add.graphics()
         this.guideTextZone.fillStyle(0x000000)
         this.guideTextZone.fillRoundedRect(
-            this.scale.width / 2 - 700 / 2,
+            this.scale.width / 2 - 800 / 2,
             this.scale.height / 4 - 100 / 2,
-            700,
+            800,
             100,
             6
         )
@@ -91,17 +93,21 @@ export class Game extends Scene
         this.guideTextZone.setScrollFactor(0)
         this.guideText3 = this.add.text(this.scale.width / 2, this.scale.height / 4,
             'Cliquez/pressez à gauche pour sauter, et à droite pour courir.\nSur ordinateur appuyez sur la barre d\'espace pour sauter.',
-            { fontSize: '24px', fill: '#fff', fontFamily: 'Vollkorn', align: 'center' }
+            { fontSize: '26px', fill: '#fff', fontFamily: 'Vollkorn', align: 'center', fontStyle: 'bold' }
         ).setOrigin(0.5)
         this.guideText3.setDepth(10000)
         this.guideText3.setScrollFactor(0)
 
+        this.guideTextContainer = this.add.container()
+        this.guideTextContainer.add([this.guideTextZone, this.guideText3])
+        this.guideTextContainer.setDepth(10000)
+        this.guideTextContainer.postFX.addBloom(0xffffff, 1, 1, 1, 1, 2)
 
         if (!this.anims.exists('run1')) {
             this.anims.create({
                 key: 'run1',
-                frames: this.anims.generateFrameNumbers('player_running', { start: 0, end: 2 }),
-                frameRate: 16,
+                frames: this.anims.generateFrameNumbers('player_running', { start: 0, end: 14 }),
+                frameRate: 90,
                 repeat: 0
             })
         }
@@ -109,8 +115,8 @@ export class Game extends Scene
         if (!this.anims.exists('run2')) {
             this.anims.create({
                 key: 'run2',
-                frames: this.anims.generateFrameNumbers('player_running', { start: 3, end: 5 }),
-                frameRate: 16,
+                frames: this.anims.generateFrameNumbers('player_running', { start: 15, end: 29 }),
+                frameRate: 90,
                 repeat: 0
             })
         }
@@ -154,21 +160,21 @@ export class Game extends Scene
         this.backgroundLayer3 = this.add.tileSprite(0, this.scale.height - 700, this.scale.width, this.textures.get('bg3').getSourceImage().height*2, 'bg3')
         this.backgroundLayer3.setOrigin(0, 0)
         this.backgroundLayer3.setScrollFactor(0)
-        this.backgroundLayer3.setScale(2)
-        this.backgroundLayer3.postFX.addBlur(0, 3, 3, 1)
+        // this.backgroundLayer3.setScale(2)
+        // this.backgroundLayer3.postFX.addBlur(0, 3, 3, 1)
 
         this.backgroundLayer2 = this.add.tileSprite(0, this.scale.height - 600, this.scale.width, this.textures.get('bg2').getSourceImage().height*2, 'bg2')
         this.backgroundLayer2.setOrigin(0, 0)
         this.backgroundLayer2.setScrollFactor(0)
-        this.backgroundLayer2.setScale(2)
-        this.backgroundLayer2.postFX.addBlur(0, 2, 2, 1)
+        // this.backgroundLayer2.setScale(2)
+        // this.backgroundLayer2.postFX.addBlur(0, 2, 2, 1)
 
         this.backgroundLayer1 = this.add.tileSprite(0, this.scale.height - 452, this.scale.width, this.textures.get('bg1').getSourceImage().height*2, 'bg1')
         this.backgroundLayer1.setOrigin(0, 0)
         this.backgroundLayer1.setScrollFactor(0)
-        this.backgroundLayer1.setScale(2)
+        // this.backgroundLayer1.setScale(2)
         this.backgroundLayer1.tilePositionY = 1
-        this.backgroundLayer1.postFX.addBlur(0, 1, 1, 1);
+        // this.backgroundLayer1.postFX.addBlur(0, 1, 1, 1);
 
         this.ground = this.add.tileSprite(0, this.scale.height - 321, this.scale.width, this.textures.get('ground').getSourceImage().height, 'ground');
         this.ground.setOrigin(0, 0);
@@ -177,15 +183,18 @@ export class Game extends Scene
         this.player = this.add.sprite(200, 0, 'player_running', 2)
         this.player.y = this.scale.height - (this.player.height / 2) - this.groundHeight;
         this.playerBaseY = this.player.y
+        // this.player.postFX.addShadow(0, 0, 0.1, 0x000000)
 
         this.cameras.main.setBounds(0, 0, Infinity, this.cameras.main.height);
 
         this.scoreText = this.add.text(40, 20, '', { fontSize: '64px', fill: '#000', fontFamily: 'Vollkorn' })
         this.scoreText.setScrollFactor(0)
+        this.scoreText.postFX.addBloom(0xffffff, 1, 1, 1, 1, 2)
         this.stageText = this.add.text(40, 100, '', { fontSize: '42px', fill: '#000', fontFamily: 'Vollkorn', fontStyle: 'bold' })
         this.stageText.setScrollFactor(0)
+        this.stageText.postFX.addBloom(0xffffff, 1, 1, 1, 1, 2)
 
-        this.cameras.main.startFollow(this.player, false, 0.3, 1, 200, 0)
+        this.cameras.main.startFollow(this.player, false, 0.7, 1, 200, 0)
 
         this.loadingBar = this.add.graphics();
         this.loadingBar.clear()
@@ -195,7 +204,7 @@ export class Game extends Scene
         this.bonusLoadingBar.clear()
         this.bonusLoadingBar.setScrollFactor(0);
 
-        this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 1, 1, 2)
+        // this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 1, 1, 2)
 
         this.createPeace()
 
@@ -216,13 +225,14 @@ export class Game extends Scene
             this.guideText2.destroy()
             this.guideText3.destroy()
             this.guideTextZone.destroy()
+            this.guideTextContainer.destroy()
             delete this.guide
         }
     }
 
     playerStep() {
         this.destroyGuide()
-        // this.player.x += 130
+        // this.player.x += this.stepSize
 
         this.tweens.add({
             targets: this.player,
@@ -299,7 +309,7 @@ export class Game extends Scene
 
         bonus.apply()
 
-        this.showNotification(this, 'BONUS: '+bonus.text)
+        this.showNotification(this, bonus.text)
 
         this.bonusTimer = this.time.addEvent({
             delay: bonus.time,
@@ -318,6 +328,8 @@ export class Game extends Scene
         this.backgroundLayer2.tilePositionX = this.cameras.main.scrollX * 0.1;
         this.backgroundLayer3.tilePositionX = this.cameras.main.scrollX * 0.05;
         this.ground.tilePositionX = this.cameras.main.scrollX;
+
+        // this.debug.text(this.time.fps, 5, 14, '#00ff00');
 
         if (Phaser.Input.Keyboard.JustDown(this.input.keyboard.addKey('SPACE')) && !this.isJumping) {
             this.isJumping = true
@@ -611,6 +623,8 @@ export class Game extends Scene
         this.sayContainer = this.add.container()
         this.sayContainer.add([this.sayBg, this.sayText, this.sayTriangle])
 
+        this.sayContainer.postFX.addBloom(0xffffff, 1, 1, 1, 1, 2)
+
         // Add animation for the notification (e.g., fade in)
         this.tweens.add({
             targets: [this.sayBg, this.sayText, this.sayTriangle],
@@ -647,7 +661,7 @@ export class Game extends Scene
             0,
             margin + notificationHeight / 2,
             message, {
-            fontSize: '22px',
+            fontSize: '26px',
             fill: '#ffffff',
             fontStyle: 'bold',
             align: 'center',
@@ -671,6 +685,12 @@ export class Game extends Scene
         bg.setScrollFactor(0)
         bg.setDepth(1000)
 
+        const notifContainer = scene.add.container()
+        notifContainer.add([bg, text])
+
+        notifContainer.postFX.addBloom(0xffffff, 1, 1, 1, 1, 2)
+
+
         // Add animation for the notification (e.g., fade in)
         scene.tweens.add({
             targets: [bg, text],
@@ -688,6 +708,7 @@ export class Game extends Scene
                         onComplete: function () {
                             bg.destroy();
                             text.destroy();
+                            notifContainer.destroy();
                         }
                     });
                 });

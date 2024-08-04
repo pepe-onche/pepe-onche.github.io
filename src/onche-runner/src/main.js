@@ -8,7 +8,7 @@ import { Preloader } from './scenes/Preloader';
 //  Find out more information about the Game Config at:
 //  https://newdocs.phaser.io/docs/3.70.0/Phaser.Types.Core.GameConfig
 const config = {
-    type: Phaser.AUTO,
+    type: Phaser.WEBGL,
     width: 1024,
     height: 768,
     parent: 'game-container',
@@ -19,14 +19,16 @@ const config = {
     },
     fps: {
         target: 60,
-        forceSetTimeOut: true
+        forceSetTimeOut: false,
+        // smoothStep: true
     },
     render: {
-        // powerPreference: 'high-performance',
-        antialias: true,
-        // pixelArt: false,
-        // roundPixels: false,
-        // preserveDrawingBuffer: false
+        powerPreference: 'high-performance',
+        antialias: false,
+        pixelArt: true,
+        roundPixels: true,
+        preserveDrawingBuffer: true,
+        clearBeforeRender: true
     },
 
     scene: [

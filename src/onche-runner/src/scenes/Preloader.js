@@ -57,9 +57,9 @@ export class Preloader extends Scene
             frameWidth: 370,
             frameHeight: 300
         })
-        this.load.spritesheet('player_running', 'player_running.png', {
-            frameWidth: 222,
-            frameHeight: 321
+        this.load.spritesheet('player_running', 'running_man.png', {
+            frameWidth: 240,
+            frameHeight: 297
         })
 
         this.load.audio('audio_wolf', 'wolf.ogg')
