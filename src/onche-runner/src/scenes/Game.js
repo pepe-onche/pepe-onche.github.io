@@ -576,7 +576,7 @@ export class Game extends Scene
         const padding = 15
         const paddingY = 10
         const playerOffset = 250
-        const y = 320
+        const y = 355
 
         // Create the text for the notification
         this.sayText = this.add.text(
