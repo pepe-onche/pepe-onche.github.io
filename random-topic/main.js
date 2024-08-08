@@ -20,7 +20,9 @@ async function getRandomTopicURL() {
 
     topicId = Math.floor(Math.random()*max+1)
     url = 'https://onche.org/topic/'+topicId
-    const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(url))
+    const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(url), {
+      redirect: 'manual'
+    })
 
     if (res.ok) {
       done = true
