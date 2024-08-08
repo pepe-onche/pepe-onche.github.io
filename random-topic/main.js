@@ -24,7 +24,7 @@ async function getRandomTopicURL() {
       redirect: 'manual'
     })
 
-    if (res.ok) {
+    if (res.status != 404) {
       done = true
     }
 
