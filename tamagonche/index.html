@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phaser Tamagotchi</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+    html, body {
+      background: #f5ac00;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 320px;
+      width: 100%;
+      height: 100%;
+    }
+
+    #events {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    #events > div {
+      background: #ffffff;
+      color: #000000;
+      margin: 10px;
+      padding: 10px;
+      font-weight: bold;
+    }
+    </style>
+</head>
+<body>
+    <div id="events"></div>
+    <script src="game.js" type="module"></script>
+</body>
+</html>
