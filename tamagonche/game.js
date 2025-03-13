@@ -61,7 +61,7 @@ function create() {
     this.anims.create({
         key: 'consume_burger',
         frames: this.anims.generateFrameNumbers('food', { start: 147, end: 149 }),
-        frameRate: 2,
+        frameRate: 0.8,
         repeat: 0
     });
 
