@@ -1,8 +1,14 @@
 const sb = supabase.createClient('https://toflnsmrnnpfkzjpfuuu.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZmxuc21ybm5wZmt6anBmdXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NDUzNzQsImV4cCI6MjA1NzMyMTM3NH0.xaJngrx5KnnhuuhtMC6adJUFrkTFRvxy5srwlK0FbVs')
 
+const EAT_TIME = 6; // seconds
+const FOOD_POS_Y = -25;
+const PET_POS_Y = 120;
+const PET_SPEED = 50;
+
 let pets = {};
+let petContainers = {};
 let petSprites = {};
-let foodSprite;
+let foodSprites = {};
 let foodLevelSprites = [];
 let game;
 
@@ -14,6 +20,10 @@ const config = {
     physics: { default: 'arcade' },
     scene: { preload, create, update },
     transparent: true,
+    disableVisibilityChange: true,
+    audio: {
+        noAudio: true,
+    },
 };
 
 
@@ -24,7 +34,7 @@ function preload() {
     this.load.image('heart_grey', 'heartgrey.png');
 }
 async function loadData() {
-    const { data, error } = await sb
+    const { data } = await sb
         .from('pets')
         .select();
     pets = data.reduce((acc, pet) => ({...acc, [pet.id.toString()]: pet }), {});
@@ -35,8 +45,8 @@ async function startGame() {
     game = new Phaser.Game(config);
 }
 
-function statusToAnim(pet) {
-    return pet.sprite_type+'_'+pet.status;
+function statusToAnim(pet, status) {
+    return pet.sprite_type+'_'+(status || pet.status);
 }
 
 function create() {
@@ -59,21 +69,42 @@ function create() {
         repeat: 0
     });
     this.anims.create({
+        key: 'puchitomatchi_eat',
+        frames: this.anims.generateFrameNumbers('puchitomatchi', { start: 1, end: 1 }),
+        frameRate: 2,
+        repeat: 0
+    });
+    this.anims.create({
+        key: 'puchitomatchi_walk',
+        frames: this.anims.generateFrameNumbers('puchitomatchi', { start: 4, end: 5 }),
+        frameRate: 6,
+        repeat: -1
+    });
+    this.anims.create({
         key: 'consume_burger',
         frames: this.anims.generateFrameNumbers('food', { start: 147, end: 149 }),
-        frameRate: 0.8,
+        frameRate: 4/EAT_TIME,
         repeat: 0
     });
 
-    foodSprite = this.add.sprite(160, 120, 'food').setScale(2).setPosition(90, 155);
-    foodSprite.setVisible(false);
-    foodSprite.on('animationcomplete', () => {
-        foodSprite.setVisible(false);
-    });
 
     for (const pet of Object.values(pets)) {
-        petSprites[pet.id.toString()] = this.add.sprite(160, 120, pet.sprite_type).setScale(2);
+        petContainers[pet.id.toString()] = this.add.container(0, PET_POS_Y);
+        petSprites[pet.id.toString()] = this.add.sprite(0, 0, pet.sprite_type).setScale(2);
+        petContainers[pet.id.toString()].add(petSprites[pet.id.toString()]);
+        petContainers[pet.id.toString()].setPosition(getPetX(pet), PET_POS_Y);
         petSprites[pet.id.toString()].play(statusToAnim(pet));
+
+        foodSprites[pet.id.toString()] = this.add.sprite(0, FOOD_POS_Y, 'food').setScale(2);
+        petContainers[pet.id.toString()].add(foodSprites[pet.id.toString()]);
+        foodSprites[pet.id.toString()].setVisible(false);
+        foodSprites[pet.id.toString()].on('animationcomplete', () => {
+            foodSprites[pet.id.toString()].setVisible(false);
+        });
+
+        petSprites[pet.id.toString()].setFlipX(pet.flip_x);
+        foodSprites[pet.id.toString()].setFlipX(pet.flip_x);
+
         updateHearts(pet);
     }
 }
@@ -84,8 +115,29 @@ function updateHearts(pet) {
     }
     foodLevelSprites = []
     for (let i = 0; i < pet.max_food; i++) {
-        foodLevelSprites.push(game.scene.scenes[0].add.sprite(config.width/2-40*(pet.max_food-1)/2+40*i, 60, pet.food >= i+1 ? 'heart_red' : 'heart_grey').setScale(2));
+        foodLevelSprites.push(game.scene.scenes[0].add.sprite(config.width/2-40*(pet.max_food-1)/2+40*i, 40, pet.food >= i+1 ? 'heart_red' : 'heart_grey').setScale(2));
     }
+}
+
+function getPetX(pet) {
+    let petWidth = petSprites[pet.id].displayWidth+12*petSprites[pet.id].scale;
+    return (config.width-petWidth/2)*pet.pos_x+petWidth/4;
+}
+
+function walk(pet, oldPet) {
+    const newX = getPetX(pet);
+    const duration = Math.abs(getPetX(oldPet)-newX)/PET_SPEED*1000;
+    game.scene.scenes[0].tweens.add({
+        targets: petContainers[pet.id.toString()],
+        x: newX,
+        duration,
+        repeat: 0,
+        onStart: () => {
+            petSprites[pet.id].play(statusToAnim(pet, 'walk'));
+        },
+        onComplete: () => petSprites[pet.id].play(statusToAnim(pet)),
+
+    });
 }
 
 function update() {
@@ -99,6 +151,10 @@ const channel = sb
     (p) => {
         const newStatus = pets[p.new.id.toString()].status !== p.new.status || pets[p.new.id.toString()].sprite !== p.new.sprite;
         const newFoodLevel = pets[p.new.id.toString()].food !== p.new.food;
+        const newPosX = pets[p.new.id.toString()].pos_x !== p.new.pos_x;
+        const newFlipX = pets[p.new.id.toString()].flip_x !== p.new.flip_x;
+
+        const oldPet = {...pets[p.new.id.toString()]};
 
         pets[p.new.id.toString()] = p.new;
 
@@ -108,6 +164,13 @@ const channel = sb
         if (newFoodLevel) {
             updateHearts(p.new);
         }
+        if (newFlipX) {
+            petSprites[p.new.id].setFlipX(p.new.flip_x);
+            foodSprites[p.new.id].setFlipX(p.new.flip_x);
+        }
+        if (newPosX) {
+            walk(p.new, oldPet);
+        }
     }
   )
   .on(
@@ -115,14 +178,24 @@ const channel = sb
     { event: 'INSERT', schema: 'public', table: 'actions' },
     (a) => {
         if (a.new.type === 'feed') {
-            foodSprite.setVisible(true);
-            foodSprite.play('consume_burger');
+            const pet = pets[a.new.pet_id];
+            foodSprites[pet.id.toString()].setVisible(true);
+            foodSprites[pet.id.toString()].play('consume_burger');
+            const eat_anim = statusToAnim(pet, 'eat');
+            const anim = petSprites[pet.id.toString()].anims.currentAnim;
+            if (anim && anim.key != statusToAnim(pet, 'walk')) {
+                petSprites[pet.id.toString()].play(eat_anim);
+            }
             const div = document.createElement('div');
             div.textContent = a.new.username + ' lui donne à manger';
             document.getElementById('events').appendChild(div);
             setTimeout(() => {
                 div.remove();
-            }, 10000);
+                const anim = petSprites[pet.id.toString()].anims.currentAnim;
+                if (anim && anim.key == eat_anim) {
+                    petSprites[pet.id.toString()].play(statusToAnim(pet));
+                }
+            }, EAT_TIME*1000);
         }
     }
   )
