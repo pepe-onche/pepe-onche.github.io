@@ -20,7 +20,6 @@ const config = {
     physics: { default: 'arcade' },
     scene: { preload, create, update },
     transparent: true,
-    disableVisibilityChange: true,
     audio: {
         noAudio: true,
     },
@@ -126,18 +125,21 @@ function getPetX(pet) {
 
 function walk(pet, oldPet) {
     const newX = getPetX(pet);
-    const duration = Math.abs(getPetX(oldPet)-newX)/PET_SPEED*1000;
-    game.scene.scenes[0].tweens.add({
-        targets: petContainers[pet.id.toString()],
-        x: newX,
-        duration,
-        repeat: 0,
-        onStart: () => {
-            petSprites[pet.id].play(statusToAnim(pet, 'walk'));
-        },
-        onComplete: () => petSprites[pet.id].play(statusToAnim(pet)),
-
-    });
+    if (document.hidden) { // Don't animate if the tab is not active
+        petContainers[pet.id].setPosition(newX, PET_POS_Y);
+    } else {
+        const duration = Math.abs(getPetX(oldPet)-newX)/PET_SPEED*1000;
+        game.scene.scenes[0].tweens.add({
+            targets: petContainers[pet.id.toString()],
+            x: newX,
+            duration,
+            repeat: 0,
+            onStart: () => {
+                petSprites[pet.id].play(statusToAnim(pet, 'walk'));
+            },
+            onComplete: () => petSprites[pet.id].play(statusToAnim(pet)),
+        });
+    }
 }
 
 function update() {
@@ -179,12 +181,14 @@ const channel = sb
     (a) => {
         if (a.new.type === 'feed') {
             const pet = pets[a.new.pet_id];
-            foodSprites[pet.id.toString()].setVisible(true);
-            foodSprites[pet.id.toString()].play('consume_burger');
             const eat_anim = statusToAnim(pet, 'eat');
-            const anim = petSprites[pet.id.toString()].anims.currentAnim;
-            if (anim && anim.key != statusToAnim(pet, 'walk')) {
-                petSprites[pet.id.toString()].play(eat_anim);
+            if (!document.hidden) { // Don't animate if the tab is not active
+                foodSprites[pet.id.toString()].setVisible(true);
+                foodSprites[pet.id.toString()].play('consume_burger');
+                const anim = petSprites[pet.id.toString()].anims.currentAnim;
+                if (anim && anim.key != statusToAnim(pet, 'walk')) {
+                    petSprites[pet.id.toString()].play(eat_anim);
+                }
             }
             const div = document.createElement('div');
             div.textContent = a.new.username + ' lui donne à manger';
