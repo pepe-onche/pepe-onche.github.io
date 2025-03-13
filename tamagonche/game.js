@@ -122,7 +122,7 @@ const channel = sb
             document.getElementById('events').appendChild(div);
             setTimeout(() => {
                 div.remove();
-            }, 30000);
+            }, 10000);
         }
     }
   )
