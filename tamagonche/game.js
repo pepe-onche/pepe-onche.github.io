@@ -1,5 +1,6 @@
 const sb = supabase.createClient('https://toflnsmrnnpfkzjpfuuu.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZmxuc21ybm5wZmt6anBmdXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NDUzNzQsImV4cCI6MjA1NzMyMTM3NH0.xaJngrx5KnnhuuhtMC6adJUFrkTFRvxy5srwlK0FbVs')
 
+const ACTIONS_COUNT = 10;
 const EAT_TIME = 6; // seconds
 const FOOD_POS_Y = -25;
 const PET_POS_Y = 120;
@@ -15,9 +16,10 @@ let game;
 const config = {
     type: Phaser.CANVAS,
     width: 320,
-    height: 240,
+    height: 210,
     pixelArt: true,
     physics: { default: 'arcade' },
+    canvas: document.getElementById("canvas"),
     scene: { preload, create, update },
     transparent: true,
     audio: {
@@ -37,6 +39,16 @@ async function loadData() {
         .from('pets')
         .select();
     pets = data.reduce((acc, pet) => ({...acc, [pet.id.toString()]: pet }), {});
+
+    const { data: actions } = await sb
+        .from('actions')
+        .select()
+        .order('id', { ascending: false })
+        .limit(ACTIONS_COUNT);
+
+    for (let action of actions.reverse()) {
+        addAction(action);
+    }
 }
 
 async function startGame() {
@@ -134,15 +146,40 @@ function walk(pet, oldPet) {
             x: newX,
             duration,
             repeat: 0,
-            onStart: () => {
-                petSprites[pet.id].play(statusToAnim(pet, 'walk'));
-            },
+            onStart: () => petSprites[pet.id].play(statusToAnim(pet, 'walk')),
             onComplete: () => petSprites[pet.id].play(statusToAnim(pet)),
         });
     }
 }
 
 function update() {
+}
+
+function addAction(action) {
+    const div = document.createElement('div');
+    div.className = 'action';
+    const time = document.createElement('div');
+    time.className = 'time';
+    const createdAt = new Date(action.created_at);
+    time.textContent = createdAt.toLocaleString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+        hour12: false
+    });
+    div.appendChild(time);
+    const content = document.createElement('div');
+    if (action.type === 'feed') {
+        content.innerHTML = `<span class="pseudo">${action.username}</span> lui donne à manger`;
+    } else {
+        return;
+    }
+    div.appendChild(content);
+    document.getElementById('actions').prepend(div);
+
+    const children = Array.from(document.getElementById('actions').children);
+    children.slice(ACTIONS_COUNT).forEach(child => child.remove());
 }
 
 const channel = sb
@@ -179,6 +216,8 @@ const channel = sb
     'postgres_changes',
     { event: 'INSERT', schema: 'public', table: 'actions' },
     (a) => {
+        addAction(a.new);
+
         if (a.new.type === 'feed') {
             const pet = pets[a.new.pet_id];
             const eat_anim = statusToAnim(pet, 'eat');
@@ -190,11 +229,7 @@ const channel = sb
                     petSprites[pet.id.toString()].play(eat_anim);
                 }
             }
-            const div = document.createElement('div');
-            div.textContent = a.new.username + ' lui donne à manger';
-            document.getElementById('events').appendChild(div);
             setTimeout(() => {
-                div.remove();
                 const anim = petSprites[pet.id.toString()].anims.currentAnim;
                 if (anim && anim.key == eat_anim) {
                     petSprites[pet.id.toString()].play(statusToAnim(pet));
