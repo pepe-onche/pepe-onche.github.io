@@ -3,20 +3,26 @@ const sb = supabase.createClient('https://toflnsmrnnpfkzjpfuuu.supabase.co', 'ey
 const ACTIONS_COUNT = 10;
 const EAT_TIME = 6; // seconds
 const FOOD_POS_Y = -25;
-const PET_POS_Y = 120;
+const PET_POS_Y = 216;
 const PET_SPEED = 50;
 
 let pets = {};
+let trash = {};
 let petContainers = {};
 let petSprites = {};
 let foodSprites = {};
 let foodLevelSprites = [];
+let trashSprites = {};
+
+let petLayer;
+let trashLayer;
+
 let game;
 
 const config = {
     type: Phaser.CANVAS,
-    width: 320,
-    height: 210,
+    width: 360,
+    height: 360,
     pixelArt: true,
     physics: { default: 'arcade' },
     canvas: document.getElementById("canvas"),
@@ -31,6 +37,7 @@ const config = {
 function preload() {
     this.load.spritesheet('puchitomatchi', 'puchitomatchi.png', { frameWidth: 66, frameHeight: 68 });
     this.load.spritesheet('food', 'food.png', { frameWidth: 26, frameHeight: 28 });
+    this.load.image('poop', 'poop.png');
     this.load.image('heart_red', 'heartred.png');
     this.load.image('heart_grey', 'heartgrey.png');
 }
@@ -49,6 +56,12 @@ async function loadData() {
     for (let action of actions.reverse()) {
         addAction(action);
     }
+
+    const { data: trashData } = await sb
+        .from('trash')
+        .select()
+        .order('id');
+    trash = trashData.reduce((acc, t) => ({...acc, [t.id.toString()]: t }), {});
 }
 
 async function startGame() {
@@ -70,6 +83,12 @@ function create() {
     this.anims.create({
         key: 'puchitomatchi_hungry',
         frames: this.anims.generateFrameNumbers('puchitomatchi', { start: 2, end: 2 }),
+        frameRate: 2,
+        repeat: 0
+    });
+    this.anims.create({
+        key: 'puchitomatchi_sick',
+        frames: this.anims.generateFrameNumbers('puchitomatchi', { start: 13, end: 13 }),
         frameRate: 2,
         repeat: 0
     });
@@ -98,9 +117,15 @@ function create() {
         repeat: 0
     });
 
+    petLayer = this.add.layer();
+    trashLayer = this.add.layer();
+
+    petLayer.setDepth(1);
+    trashLayer.setDepth(0);
 
     for (const pet of Object.values(pets)) {
         petContainers[pet.id.toString()] = this.add.container(0, PET_POS_Y);
+        petLayer.add([petContainers[pet.id.toString()]]);
         petSprites[pet.id.toString()] = this.add.sprite(0, 0, pet.sprite_type).setScale(2);
         petContainers[pet.id.toString()].add(petSprites[pet.id.toString()]);
         petContainers[pet.id.toString()].setPosition(getPetX(pet), PET_POS_Y);
@@ -118,6 +143,10 @@ function create() {
 
         updateHearts(pet);
     }
+
+    for (let t of Object.values(trash)) {
+        addTrash(t);
+    }
 }
 
 function updateHearts(pet) {
@@ -128,6 +157,10 @@ function updateHearts(pet) {
     for (let i = 0; i < pet.max_food; i++) {
         foodLevelSprites.push(game.scene.scenes[0].add.sprite(config.width/2-40*(pet.max_food-1)/2+40*i, 40, pet.food >= i+1 ? 'heart_red' : 'heart_grey').setScale(2));
     }
+}
+
+function getX(relativeX, margin) {
+    return (config.width-margin)*relativeX+margin/2;
 }
 
 function getPetX(pet) {
@@ -155,6 +188,13 @@ function walk(pet, oldPet) {
 function update() {
 }
 
+function addTrash(t) {
+    trash[t.id] = t;
+    trashSprites[t.id.toString()] = game.scene.scenes[0].add.sprite(getX(t.pos_x, 60), PET_POS_Y+20, t.type).setScale(2);
+    trashSprites[t.id.toString()].setFlipX(t.flip_x);
+    trashLayer.add([trashSprites[t.id.toString()]]);
+}
+
 function addAction(action) {
     const div = document.createElement('div');
     div.className = 'action';
@@ -172,6 +212,10 @@ function addAction(action) {
     const content = document.createElement('div');
     if (action.type === 'feed') {
         content.innerHTML = `<span class="pseudo">${action.username}</span> lui donne à manger`;
+    } else if (action.type === 'clean_trash') {
+        content.innerHTML = `<span class="pseudo">${action.username}</span> nettoie la merde`;
+    } else if (action.type === 'give_medicine') {
+        content.innerHTML = `<span class="pseudo">${action.username}</span> lui donne un doliprane`;
     } else {
         return;
     }
@@ -183,8 +227,8 @@ function addAction(action) {
 }
 
 const channel = sb
-  .channel('prod')
-  .on(
+.channel('prod')
+.on(
     'postgres_changes',
     { event: 'UPDATE', schema: 'public', table: 'pets' },
     (p) => {
@@ -211,8 +255,8 @@ const channel = sb
             walk(p.new, oldPet);
         }
     }
-  )
-  .on(
+)
+.on(
     'postgres_changes',
     { event: 'INSERT', schema: 'public', table: 'actions' },
     (a) => {
@@ -220,24 +264,28 @@ const channel = sb
 
         if (a.new.type === 'feed') {
             const pet = pets[a.new.pet_id];
-            const eat_anim = statusToAnim(pet, 'eat');
             if (!document.hidden) { // Don't animate if the tab is not active
                 foodSprites[pet.id.toString()].setVisible(true);
                 foodSprites[pet.id.toString()].play('consume_burger');
-                const anim = petSprites[pet.id.toString()].anims.currentAnim;
-                if (anim && anim.key != statusToAnim(pet, 'walk')) {
-                    petSprites[pet.id.toString()].play(eat_anim);
-                }
             }
-            setTimeout(() => {
-                const anim = petSprites[pet.id.toString()].anims.currentAnim;
-                if (anim && anim.key == eat_anim) {
-                    petSprites[pet.id.toString()].play(statusToAnim(pet));
-                }
-            }, EAT_TIME*1000);
         }
     }
-  )
-  .subscribe();
+)
+.on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'trash' },
+    (t) => {
+        addTrash(t.new);
+    }
+)
+.on(
+    'postgres_changes',
+    { event: 'DELETE', schema: 'public', table: 'trash' },
+    (t) => {
+        trashSprites[t.old.id.toString()].destroy();
+        delete trashSprites[t.old.id.toString()];
+    }
+)
+.subscribe();
 
 startGame()

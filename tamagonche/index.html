@@ -14,7 +14,7 @@
       box-sizing: border-box;
     }
     html, body {
-      background: #f5ac00;
+      background: #ffbd00;
       margin: 0;
       padding: 0;
       font-size: 20px;
@@ -42,6 +42,7 @@
       justify-content: center;
       width: 100%;
       height: 100%;
+      position: relative;
     }
 
     #sidebar {
@@ -58,6 +59,7 @@
       margin: 6px;
       padding: 10px;
       text-align: center;
+      border: 2px solid #000000;
     }
     .action > .time {
       color: #666666;
@@ -78,12 +80,32 @@
       color: #ffffff;
       text-wrap: nowrap;
     }
-    @media (max-width: 768px) {
+    #ground {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 360px;
+      transform: translateY(-50%);
+      background-image: url('background.png');
+      background-repeat: repeat-x;
+      background-size: 128px 360px;
+      background-position-x: center;
+      z-index: 0;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    #canvas {
+      z-index: 1;
+      pointer-events: none;
+    }
+    @media (max-width: 1068px) {
       body {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr 1fr;
       }
       #sidebar {
+        margin-top: 15px;
         max-width: 100%;
         overflow-y: visible;
       }
@@ -92,12 +114,13 @@
   </head>
   <body>
     <div class="status-bar">
-      Tamagonche v0.2.0 -
+      Tamagonche v0.3.0 -
       <a target="_blank" href="https://onche.org/topic/817382/tamagonche">topic</a> -
       <a target="_blank" href="https://github.com/pepe-onche/pepe-onche.github.io/tree/main/tamagonche">source (site)</a> -
       <a target="_blank" href="https://github.com/pepe-onche/onchebot/blob/dev/onchebot/examples/tamagonche.py">source (bot)</a>
     </div>
     <div id="canvas-container">
+      <div id="ground"></div>
       <canvas id="canvas"></canvas>
     </div>
     <div id="sidebar">
