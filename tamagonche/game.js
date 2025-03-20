@@ -35,11 +35,13 @@ const config = {
 
 
 function preload() {
-    this.load.spritesheet('puchitomatchi', 'puchitomatchi.png', { frameWidth: 66, frameHeight: 68 });
-    this.load.spritesheet('food', 'food.png', { frameWidth: 26, frameHeight: 28 });
-    this.load.image('poop', 'poop.png');
-    this.load.image('heart_red', 'heartred.png');
-    this.load.image('heart_grey', 'heartgrey.png');
+    this.load.spritesheet('puchitomatchi', 'img/puchitomatchi.png', { frameWidth: 66, frameHeight: 68 });
+    this.load.spritesheet('food', 'img/food.png', { frameWidth: 26, frameHeight: 28 });
+    this.load.image('scroll', 'img/scroll.png');
+    this.load.image('poop', 'img/poop.png');
+    this.load.image('bottle', 'img/bottle.png');
+    this.load.image('heart_red', 'img/heartred.png');
+    this.load.image('heart_grey', 'img/heartgrey.png');
 }
 async function loadData() {
     const { data } = await sb
@@ -123,6 +125,8 @@ function create() {
     petLayer.setDepth(1);
     trashLayer.setDepth(0);
 
+    this.add.sprite(config.width/2, 46, 'scroll').setScale(2);
+
     for (const pet of Object.values(pets)) {
         petContainers[pet.id.toString()] = this.add.container(0, PET_POS_Y);
         petLayer.add([petContainers[pet.id.toString()]]);
@@ -155,7 +159,7 @@ function updateHearts(pet) {
     }
     foodLevelSprites = []
     for (let i = 0; i < pet.max_food; i++) {
-        foodLevelSprites.push(game.scene.scenes[0].add.sprite(config.width/2-40*(pet.max_food-1)/2+40*i, 40, pet.food >= i+1 ? 'heart_red' : 'heart_grey').setScale(2));
+        foodLevelSprites.push(game.scene.scenes[0].add.sprite(config.width/2-40*(pet.max_food-1)/2+40*i, 46, pet.food >= i+1 ? 'heart_red' : 'heart_grey').setScale(2));
     }
 }
 
